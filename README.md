@@ -114,25 +114,17 @@ streamlit run streamlit_app.py
 
 ## System Architecture
 
-```text
-YouTube Video
-      ↓
-Transcript Extraction
-      ↓
-Text Chunking
-      ↓
-Embeddings Generation
-      ↓
-FAISS Vector Store
-      ↓
-Semantic Retrieval
-      ↓
-LLM (OpenRouter)
-      ↓
-Final AI Response
-```
 
----
+```mermaid
+flowchart TD
+    A[YouTube Video] --> B[Transcript Extraction]
+    B --> C[Text Chunking]
+    C --> D[Embeddings Generation]
+    D --> E[FAISS Vector Store]
+    E --> F[Semantic Retrieval]
+    F --> G[LLM (OpenRouter)]
+    G --> H[Final AI Response]
+```
 
 ## Example Questions
 
