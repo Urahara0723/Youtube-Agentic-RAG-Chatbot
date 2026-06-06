@@ -116,14 +116,17 @@ streamlit run streamlit_app.py
 
 
 ```mermaid
-flowchart TD
+flowchart LR
     A[YouTube Video] --> B[Transcript Extraction]
     B --> C[Text Chunking]
-    C --> D[Embeddings Generation]
-    D --> E[FAISS Vector Store]
-    E --> F[Semantic Retrieval]
-    F --> G[LLM (OpenRouter)]
-    G --> H[Final AI Response]
+    C --> D[Embedding Generation]
+    D --> E[(FAISS Vector Store)]
+
+    Q[User Query] --> F[Semantic Retrieval]
+    E --> F
+
+    F --> G["OpenRouter LLM"]
+    G --> H[AI Response]
 ```
 
 ## Example Questions
