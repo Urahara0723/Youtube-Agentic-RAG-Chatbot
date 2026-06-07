@@ -1,6 +1,6 @@
-# YouTube RAG Chatbot
+# YouTube Agentic-RAG Chatbot
 
-An AI-powered Retrieval-Augmented Generation (RAG) chatbot that answers questions about YouTube videos using transcript-based semantic search.
+An AI-powered conversational assistant that allows users to interact with YouTube videos Retrieval-Augmented Generation (RAG).
 
 This project extracts transcripts from YouTube videos, converts them into embeddings, stores them in a FAISS vector database, retrieves relevant context, and generates responses using an open source LLM through OpenRouter.
 
@@ -9,25 +9,28 @@ This project extracts transcripts from YouTube videos, converts them into embedd
 ## Features
 
 - YouTube transcript extraction
-- Semantic search using FAISS vector database
-- Retrieval-Augmented Generation (RAG)
-- Question answering over video transcripts
+- Semantic search over video using FAISS vector database
+- Retrieval-Augmented Generation (RAG) pipeline
+- Conversational memoery powered by LangGraph
+- Multi-turn question answering
 - OpenRouter LLM integration
 - Modular Python project structure
 - Streamlit-based interface
 
 ---
 
-## Tech Stack
+## 🛠️ Technology Stack
 
-- Python
-- LangChain
-- FAISS
-- HuggingFace Embeddings
-- OpenRouter
-- Streamlit
-- YouTube Transcript API
-
+| Category | Technologies |
+|-----------|-------------|
+| AI Frameworks | LangChain, LangGraph |
+| LLM Provider | OpenRouter |
+| Language Model | GPT-OSS-120B |
+| Embeddings | BAAI/bge-large-en-v1.5 |
+| Vector Database | FAISS |
+| Frontend | Streamlit |
+| Backend | Python |
+| Supporting Tools | Hugging Face, YouTube Transcript API, python-dotenv |
 ---
 
 ## Project Structure
@@ -131,21 +134,21 @@ flowchart LR
 
 ## Example Questions
 
-- What is MCP?
 - Summarize the video
-- What did the speaker say about Tiny LLMs?
+- What did the speaker say about {Topic}?
 - What are the key takeaways from the video?
 
 ---
 
 ## Future Improvements
 
-- Timestamp-based retrieval
-- Chat history
-- Multi-video support
-- Improved UI/UX
-- Retrieval caching
-- Source citations
+- Source citations for responses
+- Timestamp-aware retrieval
+- Multi-video knowledge base
+- MCP (Model Context Protocol) integration
+- Agentic tool calling
+- Quiz generation from videos
+- Exportable notes and summaries
 
 ---
 
