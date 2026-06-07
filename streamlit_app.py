@@ -1,5 +1,10 @@
 import streamlit as st
 
+from langchain_core.messages import HumanMessage
+
+from app.chatbot import chatbot, set_retriever
+
+
 from app.transcript import (
     extract_video_id,
     get_transcript,
@@ -9,36 +14,121 @@ from app.rag_pipeline import (
     create_chunks,
     create_vector_store,
     create_retriever,
-    generate_answer,
 )
 
 st.set_page_config(
-    page_title="YouTube RAG Chatbot",
+    page_title="YouTube Agentic RAG Chatbot",
     page_icon="🎥",
+    layout="wide",
 )
 
-st.title("🎥 YouTube RAG Chatbot")
+st.title("🎥 YouTube AI Assistant")
 
-url = st.text_input("Enter YouTube URL")
+# -----------------------------
+# Session State
+# -----------------------------
 
-question = st.text_input("Ask a question")
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-if st.button("Generate Answer"):
+if "retriever" not in st.session_state:
+    st.session_state.retriever = None
 
-    with st.spinner("Processing video..."):
+# -----------------------------
+# Sidebar
+# -----------------------------
 
-        video_id = extract_video_id(url)
+with st.sidebar:
 
-        transcript = get_transcript(video_id)
+    st.header("🎥 Video Settings")
 
-        chunks = create_chunks(transcript)
+    url = st.text_input("YouTube URL")
 
-        vector_store = create_vector_store(chunks)
+    if st.button("Load Video"):
 
-        retriever = create_retriever(vector_store)
+        with st.spinner("Processing video..."):
 
-        answer = generate_answer(retriever, question)
+            video_id = extract_video_id(url)
 
-    st.success("Answer Generated!")
+            transcript = get_transcript(video_id)
 
-    st.write(answer)
+            chunks = create_chunks(transcript)
+
+            vector_store = create_vector_store(chunks)
+
+            retriever = create_retriever(vector_store)
+
+            set_retriever(retriever)
+
+            st.session_state.retriever = retriever
+
+        st.success("Video Loaded Successfully!")
+
+# -----------------------------
+# Display Chat History
+# -----------------------------
+
+for message in st.session_state.messages:
+
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# -----------------------------
+# Chat Input
+# -----------------------------
+
+prompt = st.chat_input(
+    "Ask anything from the video:"
+)
+
+if prompt:
+
+    if st.session_state.retriever is None:
+
+        st.error(
+            "Please load a YouTube video first."
+        )
+
+        st.stop()
+
+    # User Message
+    st.session_state.messages.append(
+        {
+            "role": "user",
+            "content": prompt,
+        }
+    )
+
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Assistant Message
+    with st.chat_message("assistant"):
+
+        with st.spinner("Thinking..."):
+
+            config = {
+                "configurable": {
+                "thread_id": "1"
+               }
+            }
+
+            result = chatbot.invoke(
+                {
+                    "messages": [
+                        HumanMessage(content=prompt)
+                    ]
+                },
+                config = config,
+            )
+
+            answer = result["messages"][-1].content
+
+            st.markdown(answer)
+
+    st.session_state.messages.append(
+        {
+            "role": "assistant",
+            "content": answer,
+        }
+    )

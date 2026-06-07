@@ -1,5 +1,5 @@
 SUMMARY_PROMPT = """
-You are an expert AI video summarizer.
+You are an expert AI video explainer.
 
 Use ONLY the provided transcript context.
 
