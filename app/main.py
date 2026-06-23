@@ -37,19 +37,28 @@ def main():
 
         print("Retriever ready.\n")
 
-        question = input("Ask a question about the video:\n")
+        print("You can now chat with the video.")
+        
+        print("Type 'exit' to quit.\n")
 
-        print("\n Generating answer...\n")
+        while True:
 
-        answer = generate_answer(retriever, question)
+            question = input("You: ")
 
-        print("\n AI Response:\n")
+            if question.lower() == "exit":
+                break
 
-        print(answer)
+            answer = generate_answer(
+                retriever,
+                question
+            )
+
+            print("\nAI:", answer)
+            print()
 
     except Exception as error:
 
-        print(f"\n Error: {error}")
+        print(f"\nError: {error}")
 
 
 if __name__ == "__main__":
