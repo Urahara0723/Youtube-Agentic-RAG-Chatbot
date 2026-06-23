@@ -8,25 +8,69 @@ This project extracts transcripts from YouTube videos, converts them into embedd
 
 ## Features
 
-- YouTube transcript extraction
-- Semantic search using FAISS vector database
+- Extracts transcripts directly from YouTube videos
+- Intelligent text chunking using LangChain
+- Semantic search with FAISS vector database
 - Retrieval-Augmented Generation (RAG)
-- Question answering over video transcripts
-- OpenRouter LLM integration
-- Modular Python project structure
-- Streamlit-based interface
+- Powered by GPT-OSS-120B through OpenRouter
+- Interactive Streamlit chat interface
+- Starter prompts for quick exploration
+- Dark-themed modern UI
+- Persistent chat history during session
 
 ---
 
 ## Tech Stack
 
-- Python
+### AI / LLM Frameworks
 - LangChain
-- FAISS
-- HuggingFace Embeddings
+- LangGraph (in progress)
+
+### Language Models
 - OpenRouter
+- GPT-OSS-120B
+
+### Embeddings
+- BAAI/bge-large-en-v1.5
+
+### Vector Database
+- FAISS
+
+### Frontend
 - Streamlit
+
+### Backend
+- Python
+
+### Supporting Libraries
+- Hugging Face
+- python-dotenv
 - YouTube Transcript API
+
+---
+
+## Architecture Diagram
+
+```mermaid
+flowchart LR
+
+    A[YouTube URL] --> B[Transcript Extraction]
+    B --> C[Text Chunking]
+    C --> D[Embedding Generation]
+    D --> E[(FAISS Vector Store)]
+
+    U[User Query] --> F[Retriever]
+
+    E --> F
+
+    F --> G[Context Retrieval]
+
+    G --> H["GPT-OSS-120B via OpenRouter"]
+
+    H --> I[AI Response]
+
+    I --> J[Streamlit Chat Interface]
+```
 
 ---
 
@@ -115,21 +159,25 @@ streamlit run streamlit_app.py
 ## System Architecture
 
 ```text
-YouTube Video
-      ↓
-Transcript Extraction
-      ↓
-Text Chunking
-      ↓
-Embeddings Generation
-      ↓
+YouTube URL
+↓
+Transcript Processing
+↓
+Chunking
+↓
+BAAI Embeddings
+↓
 FAISS Vector Store
-      ↓
-Semantic Retrieval
-      ↓
-LLM (OpenRouter)
-      ↓
-Final AI Response
+↓
+Retrieval
+↓
+GPT-OSS-120B
+↓
+Chat Interface
+↓
+Starter Prompts
+↓
+Conversational Experience
 ```
 
 ---
