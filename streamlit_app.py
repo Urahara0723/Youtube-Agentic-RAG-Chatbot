@@ -1,15 +1,16 @@
 import streamlit as st
+from app.chatbot import chatbot
+from langchain_core.messages import HumanMessage
 
 from app.transcript import (
     extract_video_id,
     get_transcript,
 )
 
-from app.rag_pipeline import (
+from app.retrieval import (
     create_chunks,
     create_vector_store,
     create_retriever,
-    generate_answer,
 )
 
 # --------------------------------------------------
@@ -150,14 +151,7 @@ with st.sidebar:
 
     st.divider()
 
-    if st.session_state.retriever:
-
-        st.success("Ready")
-
-
-    else:
-
-        st.warning("No video loaded")
+    
 
 # --------------------------------------------------
 # Load Video
@@ -186,6 +180,9 @@ if load_video:
             )
 
         st.session_state.retriever = retriever
+
+        
+        print("Retriever successfully set.")
 
         st.session_state.chunk_count = len(chunks)
 
@@ -271,28 +268,34 @@ if (
         starter_prompt = "Summarize this video."
 
     elif concepts_clicked:
-        starter_prompt = (
-            "What are the key concepts discussed in this video?"
-        )
+        starter_prompt = "What are the key concepts discussed in this video?"
 
     elif notes_clicked:
-        starter_prompt = (
-            "Generate detailed study notes from this video."
-        )
+        starter_prompt = "Generate detailed study notes from this video."
 
     elif quiz_clicked:
-        starter_prompt = (
-            "Create a quiz based on this video."
-        )
+        starter_prompt = "Create a quiz based on this video."
 
     if starter_prompt:
 
         with st.spinner("Thinking..."):
 
-            answer = generate_answer(
-                st.session_state.retriever,
-                starter_prompt,
+            result = chatbot.invoke(
+                {
+                    "messages": [
+                        HumanMessage(content=starter_prompt)
+                    ]
+                },
+                config={
+                   "configurable": {
+                   "thread_id": "youtube_chat"
+                },
+
+                   "retriever": st.session_state.retriever
+                },
             )
+
+            answer = result["messages"][-1].content
 
         st.session_state.messages.append(
             {
@@ -311,6 +314,10 @@ if (
         st.rerun()
 
 # --------------------------------------------------
+# Chat Input
+# --------------------------------------------------
+
+# --------------------------------------------------
 # Chat History
 # --------------------------------------------------
 
@@ -322,14 +329,7 @@ for message in st.session_state.messages:
         message["role"],
         avatar=avatar,
     ):
-
-        st.markdown(
-            message["content"]
-        )
-
-# --------------------------------------------------
-# Chat Input
-# --------------------------------------------------
+        st.markdown(message["content"])
 
 prompt = st.chat_input(
     "Ask anything about the video..."
@@ -365,10 +365,22 @@ if prompt:
 
         with st.spinner("Thinking..."):
 
-            answer = generate_answer(
-                st.session_state.retriever,
-                prompt,
+            result = chatbot.invoke(
+                {
+                    "messages": [
+                        HumanMessage(content=prompt)
+                    ]
+                },
+                config={
+                   "configurable": {
+                   "thread_id": "youtube_chat"
+                },
+
+                   "retriever": st.session_state.retriever
+                },
             )
+
+            answer = result["messages"][-1].content
 
             st.markdown(answer)
 
@@ -378,3 +390,5 @@ if prompt:
             "content": answer,
         }
     )
+
+    st.rerun()

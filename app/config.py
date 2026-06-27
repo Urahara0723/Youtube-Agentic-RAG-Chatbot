@@ -1,14 +1,12 @@
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 import os
+
+from langchain_groq import ChatGroq
 
 load_dotenv()
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-
-llm = ChatOpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY,
-    model="openai/gpt-oss-120b:free",
+llm = ChatGroq(
+    api_key=os.getenv("GROQ_API_KEY"),
+    model="llama-3.3-70b-versatile",
     temperature=0.2,
 )

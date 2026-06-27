@@ -1,29 +1,115 @@
-from langgraph.graph import StateGraph, START, END
 from typing import TypedDict, Annotated
-from langchain_core.messages import BaseMessage, HumanMessage
-from langgraph.graph.message import add_messages #add_message is more optimized to work with Basemessages.
-from app.config import llm
+
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
 from langgraph.checkpoint.memory import MemorySaver
+
+from langchain_core.messages import (
+    BaseMessage,
+    HumanMessage,
+    AIMessage,
+    SystemMessage,
+)
+
 from langchain_core.prompts import PromptTemplate
+
+from app.config import llm
 from app.prompts import SUMMARY_PROMPT
 
+
+# --------------------------------------------------
+# State
+# --------------------------------------------------
 
 class ChatState(TypedDict):
 
     messages: Annotated[list[BaseMessage], add_messages]
+
+    search_query: str
+
     context: str
 
-CURRENT_RETRIEVER = None
 
-def set_retriever(retriever):
-    global CURRENT_RETRIEVER
-    CURRENT_RETRIEVER = retriever
 
-def retrieve_node(state: ChatState):
+# --------------------------------------------------
+# Query Understanding
+# --------------------------------------------------
 
-    question = state["messages"][-1].content
+def understand_query_node(state: ChatState):
 
-    docs = CURRENT_RETRIEVER.invoke(question)
+    messages = state["messages"]
+
+    latest_question = messages[-1].content
+
+    history = "\n".join(
+
+        f"{type(msg).__name__}: {msg.content}"
+
+        for msg in messages[:-1]
+
+    )
+
+    prompt = f"""
+You are a Query Understanding Agent.
+
+Conversation History:
+
+{history}
+
+Current User Question:
+
+{latest_question}
+
+Rewrite the user's question into a standalone search query.
+
+Rules:
+
+- Resolve references like:
+    - it
+    - this
+    - that
+    - first point
+    - second topic
+    - previous answer
+
+- If the question is already standalone,
+return it unchanged.
+
+Return ONLY the search query.
+"""
+
+    response = llm.invoke(
+
+        [
+            SystemMessage(content=prompt)
+        ]
+
+    )
+
+    search_query = response.content.strip()
+
+    print("\n========== QUERY ==========")
+    print(search_query)
+    print("===========================\n")
+
+    return {
+
+        "search_query": search_query
+
+    }
+
+
+# --------------------------------------------------
+# Retrieval
+# --------------------------------------------------
+
+def retrieve_node(state: ChatState, config):
+
+    retriever = config["configurable"]["retriever"]
+
+    query = state["search_query"]
+
+    docs = retriever.invoke(query)
 
     context = "\n\n".join(
         doc.page_content
@@ -34,62 +120,138 @@ def retrieve_node(state: ChatState):
         "context": context
     }
 
-checkpointer = MemorySaver()
+# --------------------------------------------------
+# Generation
+# --------------------------------------------------
 
-graph = StateGraph(ChatState)
-
-def chat_node(state: ChatState):
+def generate_node(state: ChatState):
 
     question = state["messages"][-1].content
 
     context = state["context"]
 
     prompt = PromptTemplate(
+
         template=SUMMARY_PROMPT,
+
         input_variables=[
+
             "context",
+
             "question",
+
         ],
+
     )
 
-    final_prompt = prompt.format(
+    system_prompt = prompt.format(
+
         context=context,
+
         question=question,
+
     )
 
-    response = llm.invoke(
-        final_prompt
+    conversation = [
+
+        SystemMessage(content=system_prompt)
+
+    ]
+
+    conversation.extend(
+
+        state["messages"]
+
     )
+
+    print("\n========== MEMORY ==========")
+
+    for msg in state["messages"]:
+
+        print(type(msg).__name__, ":", msg.content)
+
+    print("============================\n")
+
+    response = llm.invoke(conversation)
 
     return {
-        "messages": [response]
+
+        "messages": [
+
+            AIMessage(content=response.content)
+
+        ]
+
     }
 
-# adding nodes
+
+# --------------------------------------------------
+# Graph
+# --------------------------------------------------
+
+graph = StateGraph(ChatState)
+
 graph.add_node(
-    "retrieve_node",
-    retrieve_node
+
+    "understand_query",
+
+    understand_query_node,
+
 )
 
 graph.add_node(
-    "chat_node",
-    chat_node
+
+    "retrieve",
+
+    retrieve_node,
+
+)
+
+graph.add_node(
+
+    "generate",
+
+    generate_node,
+
 )
 
 graph.add_edge(
+
     START,
-    "retrieve_node"
+
+    "understand_query",
+
 )
 
 graph.add_edge(
-    "retrieve_node",
-    "chat_node"
+
+    "understand_query",
+
+    "retrieve",
+
 )
 
 graph.add_edge(
-    "chat_node",
-    END
+
+    "retrieve",
+
+    "generate",
+
 )
 
-chatbot = graph.compile(checkpointer= checkpointer)
+graph.add_edge(
 
+    "generate",
+
+    END,
+
+)
+
+
+memory = MemorySaver()
+
+chatbot = graph.compile(
+
+    checkpointer=memory
+
+)

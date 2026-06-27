@@ -1,14 +1,15 @@
-from app.transcript import (
-    extract_video_id,
-    get_transcript,
-)
-
-from app.rag_pipeline import (
+from app.retrieval import (
     create_chunks,
     create_vector_store,
     create_retriever,
-    generate_answer,
 )
+
+from app.chatbot import (
+    chatbot,
+    set_retriever,
+)
+
+from langchain_core.messages import HumanMessage
 
 
 def main():
@@ -35,6 +36,8 @@ def main():
 
         retriever = create_retriever(vector_store)
 
+        set_retriever(retriever)
+
         print("Retriever ready.\n")
 
         print("You can now chat with the video.")
@@ -48,10 +51,22 @@ def main():
             if question.lower() == "exit":
                 break
 
-            answer = generate_answer(
-                retriever,
-                question
+            config = {
+                "configurable": {
+                    "thread_id": "terminal_chat"
+                }
+            }
+
+            result = chatbot.invoke(
+                {
+                    "messages": [
+                        HumanMessage(content=question)
+                    ]
+                },
+                config=config,
             )
+
+            answer = result["messages"][-1].content
 
             print("\nAI:", answer)
             print()
